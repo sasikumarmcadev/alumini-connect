@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+{% if perms.auth.is_admin %}
+{% include "admin/components/sidebar.html" %}
+{% elif perms.auth.is_alumnus %}
+{% include "alumni/components/sidebar.html" %}
+{% elif perms.auth.is_student %}
+{% include "student/components/sidebar.html" %}
+{% endif %}
+{% endblock %}
+
+
+{% block content %}
+<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+  <h1 class="mt-5 h2">Student List</h1>
+  
+  <!-- Bulk Upload Button -->
+  <div class="mb-4">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkUploadModalList">
+      <i class="bi bi-file-earmark-excel"></i> Bulk Upload Students
+    </button>
+  </div>
+  
+  <!-- Display Messages (for bulk upload feedback) -->
+  {% if messages %}
+  <div class="mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  
+  <!-- Bulk Upload Success/Failure Summary -->
+  {% if upload_summary %}
+  <div class="alert alert-info">
+    <h5>Upload Summary:</h5>
+    <ul class="mb-0">
+      <li>Total processed: {{ upload_summary.total }}</li>
+      <li>Created: {{ upload_summary.created }}</li>
+      <li>Updated: {{ upload_summary.updated }}</li>
+      <li>Errors: {{ upload_summary.errors }}</li>
+    </ul>
+  </div>
+  {% endif %}
+  
+  <form action="">
+    <div class="p-1 bg-light rounded rounded-pill shadow-sm mb-4">
+      <div class="input-group">
+        <input type="search" name="q" placeholder="Search based on USN, Name, Branch" aria-describedby="button-addon1" class="form-control border-0 bg-light">
+        <div class="input-group-append">
+          <button id="button-addon1" type="submit" class="btn btn-link text-primary"><i class="bi bi-search"></i></button>
+        </div>
+      </div>
+    </div>
+  </form>
+  
+  <div class="mt-5">
+    <div class="table-responsive">
+      <table class="mt-4 table table-bordered border-dark">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">USN</th>
+            <th scope="col">NAME</th>
+            <th scope="col">CONTACT NUMBER</th>
+            <th scope="col">RTC EMAIL ID</th>
+            <th scope="col">EMAIL ID</th>
+            <th scope="col">Branch</th>
+            <th scope="col">Year Joined</th>
+
+            {% if perms.auth.is_admin %}
+            <th scope="col">Edit</th>
+            <th scope="col">Delete</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in students %}
+          <tr>
+            <td>{{item.usn}}</td>
+            <td>{{item.name}}</td>
+            <td>{{item.phone}}</td>
+            <td>{{item.rv_email}}</td>
+            <td>{{item.email}}</td>
+            <td>{{item.branch}}</td>
+            <td>{{item.year_joined}}</td>
+            {% if perms.auth.is_admin %}
+            <td>
+              <a href="{% url 'update_student' pk=item.id %}" class="btn text-secondary px-0">
+                <i class="bi bi-pencil-square"></i>
+              </a>
+            </td>
+
+            <td>
+              <form action="{% url 'delete_student' pk=item.user.pk %}" method="post" onsubmit="return confirm('Are you sure you want to delete?')">
+                {% csrf_token %}
+                <button type="submit" class="btn">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if perms.auth.is_admin %}9{% else %}7{% endif %}" class="text-center">No students found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Bulk Upload Modal for List Page -->
+<div class="modal fade" id="bulkUploadModalList" tabindex="-1" aria-labelledby="bulkUploadModalListLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="bulkUploadModalListLabel">
+          <i class="bi bi-upload"></i> Upload Students Excel File
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'bulk_upload_students' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="excelFileList" class="form-label">Select Excel File (.xls, .xlsx)</label>
+            <input class="form-control" type="file" id="excelFileList" name="excel_file" accept=".xls,.xlsx,.xlsm" required>
+            <input type="hidden" name="redirect_to" value="list">
+          </div>
+          
+          <div class="alert alert-info">
+            <h6><strong>Required Excel Format:</strong></h6>
+            <p class="mb-2">Your Excel file must contain these columns in this order:</p>
+            <ul class="mb-0">
+              <li><strong>Name</strong> - Full name of student</li>
+              <li><strong>USN</strong> - University Seat Number (unique)</li>
+              <li><strong>Phone</strong> - Contact number</li>
+              <li><strong>RTC_Email</strong> - RTC college email address (preferred, legacy is also accepted)</li>
+              <li><strong>Email</strong> - Personal email address</li>
+              <li><strong>Branch</strong> - Branch/Department</li>
+              <li><strong>Year_Joined</strong> - Date format (YYYY-MM-DD or Excel date)</li>
+            </ul>
+          </div>
+          
+          <div class="alert alert-warning">
+            <strong>Note:</strong>
+            <ul class="mb-0">
+              <li>Default password for new students: <code>changeme123</code></li>
+              <li>Existing students will be updated based on USN</li>
+              <li>Duplicate emails will be rejected</li>
+              <li>After upload, students will be added to the list below</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-upload"></i> Upload & Process
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

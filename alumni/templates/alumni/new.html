@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+{% include "admin/components/sidebar.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+    <div class="card text-white bg-dark col-md-6 offset-md-3 mt-5 p-5">
+        <h1 class="h2 mb-4">Alumni Details Form</h1>
+        
+        <!-- Bulk Upload Button -->
+        <div class="mb-4">
+            <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#bulkUploadModal">
+                <i class="bi bi-file-earmark-excel"></i> Upload Bulk Alumni (Excel)
+            </button>
+            <div class="mt-2 text-center">
+            </div>
+        </div>
+        
+        <!-- Individual Alumni Form -->
+        <form method="post">
+            {% csrf_token %}
+            <div class="mt-2">
+                <label class="col-form-label">Name</label>
+                {{ form.name }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">USN</label>
+                {{ form.usn }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">Phone Number</label>
+                {{ form.phone }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">RTC Email ID</label>
+                {{ form.rv_email }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">Personal Email ID</label>
+                {{ form.email }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">Branch</label>
+                {{ form.branch }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">Admission Date</label>
+                {{ form.year_joined }}
+            </div>
+            <div class="mt-2">
+                <label class="col-form-label">Graduation Date</label>
+                {{ form.year_passed }}
+            </div>
+            <div class="mt-2">
+                {% if messages %}
+                <ul class="list-unstyled">
+                    {% for message in messages %}
+                    <li>
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if form.errors %}
+                {% for field in form %}
+                {% for error in field.errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>{{ error|escape }}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>{{ error|escape }}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary w-100">Add Alumni</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<!-- Bulk Upload Modal -->
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-labelledby="bulkUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="bulkUploadModalLabel">
+                    <i class="bi bi-upload"></i> Upload Alumni Excel File
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'bulk_upload_alumni' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="excelFile" class="form-label">Select Excel File (.xls, .xlsx)</label>
+                        <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xls,.xlsx,.xlsm" required>
+                        <input type="hidden" name="redirect_to" value="new">
+                        <div class="form-text text-light">File size limit: 10MB</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><strong><i class="bi bi-file-earmark-excel"></i> Required Excel Format:</strong></h6>
+                        <p class="mb-2">Your Excel file must contain these columns in the first row:</p>
+                        <ul class="mb-0">
+                            <li><strong>Name</strong> - Full name of alumni (Required)</li>
+                            <li><strong>USN</strong> - University Seat Number (Required, Unique)</li>
+                            <li><strong>Phone</strong> - Contact number (Required)</li>
+                            <li><strong>RTC_Email</strong> - RTC college email address (Required, legacy is also accepted)</li>
+                            <li><strong>Email</strong> - Personal email address (Required)</li>
+                            <li><strong>Branch</strong> - Branch/Department</li>
+                            <li><strong>Year_Joined</strong> - Admission date (YYYY-MM-DD format)</li>
+                            <li><strong>Year_Passed</strong> - Graduation date (YYYY-MM-DD format)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <strong><i class="bi bi-info-circle"></i> Note:</strong>
+                        <ul class="mb-0">
+                            <li>Default password for new alumni: <code>changeme123</code></li>
+                            <li>Existing alumni will be updated based on USN</li>
+                            <li>Duplicate emails will be rejected</li>
+                            <li>After successful upload, you can view all alumni in the list page</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-upload"></i> Upload & Process
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to download template
+    function downloadTemplate() {
+        const templateContent = [
+            ['Name', 'USN', 'Phone', 'RTC_Email', 'Email', 'Branch', 'Year_Joined', 'Year_Passed'],
+            ['John Doe', '1RTC20CS001', '9876543210', 'john@rtc.edu.in', 'john@gmail.com', 'Computer Science', '2020-08-01', '2024-06-30']
+        ];
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        templateContent.forEach(row => {
+            csvContent += row.join(",") + "\r\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "alumni_upload_template.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // Add download template button if not exists
+    if (!document.querySelector('.template-download-btn')) {
+        const alertDiv = document.querySelector('.alert-warning');
+        if (alertDiv) {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn btn-sm btn-outline-light mt-2';
+            downloadBtn.innerHTML = '<i class="bi bi-download"></i> Download Template';
+            downloadBtn.onclick = downloadTemplate;
+            alertDiv.appendChild(downloadBtn);
+        }
+    }
+</script>
+{% endblock %}
