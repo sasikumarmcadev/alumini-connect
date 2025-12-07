@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 from base import loggers
-#from . import config
+# from . import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,9 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-b%nlf(=rzf*e(^u3gp4e1lf@(1d)(#o*8w0#^7b@umtjv#zsx="
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True  # Change to False in production
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = []  # For deployment, add: ["localhost", "127.0.0.1", ".onrender.com"]
 
 
 # Application definition
@@ -46,8 +46,6 @@ INSTALLED_APPS = [
     "comments.apps.CommentsConfig",
     "alumni.apps.AlumniConfig",
     "student.apps.StudentConfig",
-   
-   
 ]
 
 MIDDLEWARE = [
@@ -144,12 +142,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = os.path.join(BASE_DIR, "static/")
-#STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+# URL prefix for static files
+STATIC_URL = "/static/"
 
+# Where collectstatic will gather all static files for deployment
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Additional directories where Django will look for static files in development
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+
+# Media files
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -158,12 +167,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "/"
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+
+# Email settings
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'bergilfoyle@gmail.com'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = "bergilfoyle@gmail.com"
+EMAIL_HOST_PASSWORD = ""  # Put your app password or env var here
+
+
+# Logging
 
 LOGGING = {
     "version": 1,
@@ -180,7 +195,3 @@ LOGGING = {
         },
     },
 }
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static/"),
-]
